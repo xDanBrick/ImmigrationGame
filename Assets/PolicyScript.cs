@@ -15,7 +15,10 @@ public class PolicyScript : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		
+		if(Input.GetKeyDown(KeyCode.Return))
+        {
+
+        }
 	}
 
     public void OnPolicyChange()

@@ -31,11 +31,9 @@ public class Characters
 
 public class CharacterScript : MonoBehaviour {
 
-    private const int prosperityStart = 50;
-    private const int prosperityMax = 100;
-    private const float prosperityOffset = 70.0f;
+    private const int prosperityMax = 70;
 
-    private int prosperityCounter = prosperityStart;
+    private int prosperityCounter = 0;
     private Job job;
     private string characterName;
     private MigrationStatus migrationStatus;
@@ -53,6 +51,11 @@ public class CharacterScript : MonoBehaviour {
         return "NONE";
     }
 
+    void PolicyDeck()
+    {
+
+    }
+
     // Use this for initialization
     void Start () {
         characterName = Characters.names[Random.Range(0, 12)];
@@ -61,7 +64,7 @@ public class CharacterScript : MonoBehaviour {
         transform.Find("NameText").GetComponent<Text>().text = "Name: " + characterName;
         transform.Find("MigrationText").GetComponent<Text>().text = "Migration Status: " + GetMirationStatusText();
         transform.Find("RoleText").GetComponent<Text>().text = "Role: " + job.roleName;
-        transform.Find("ProsperityBar").Find("Slider").GetComponent<RectTransform>().anchoredPosition = new Vector2(prosperityOffset, 0.0f);
+        //transform.Find("ProsperityBar").Find("Slider").GetComponent<RectTransform>().anchoredPosition = new Vector2(prosperityOffset, 0.0f);
     }
 	
 	// Update is called once per frame
@@ -71,6 +74,16 @@ public class CharacterScript : MonoBehaviour {
 
     public void OnPolicyCard(PolicyCard card)
     {
+        prosperityCounter += card.ammount;
+        if(prosperityCounter > prosperityMax)
+        {
+            prosperityCounter = prosperityMax;
+        }
+        if (prosperityCounter < -prosperityMax)
+        {
+            prosperityCounter = -prosperityMax;
+        }
 
+        transform.Find("ProsperityBar").Find("Slider").GetComponent<RectTransform>().anchoredPosition = new Vector2((float)prosperityCounter, 0.0f);
     }
 }

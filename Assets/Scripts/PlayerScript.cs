@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 
-struct PolicyCard
+public struct PolicyCard
 {
     public int ammount;
 }
@@ -19,8 +19,6 @@ public class PlayerScript : NetworkBehaviour
     bool isVoting = false;
 
     [SerializeField] GameObject policyButton;
-
-    
 
     public void OnTableMessage(NetworkMessage netMsg)
     {
@@ -162,6 +160,13 @@ public class PlayerScript : NetworkBehaviour
             if (policies.Count < 2)
             {
                 policies.Add(gameObject);
+                Transform characters = GameObject.Find("Characters").transform;
+                for(int i = 0; i < characters.childCount; ++i)
+                {
+                    PolicyCard card = new PolicyCard();
+                    card.ammount = 5;
+                    characters.GetChild(i).GetComponent<CharacterScript>().OnPolicyCard(card);
+                }
             }
             else
             {
