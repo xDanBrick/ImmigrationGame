@@ -17,7 +17,6 @@ public class Job
     public string roleName;
 }
 
-
 public class Characters
 {
     public const int characterCount = 12;
@@ -53,7 +52,7 @@ public class CharacterScript : MonoBehaviour {
 
     void PolicyDeck()
     {
-
+        //Draw
     }
 
     // Use this for initialization
@@ -62,7 +61,7 @@ public class CharacterScript : MonoBehaviour {
         job = Characters.jobs[Random.Range(0, 12)];
         migrationStatus = (MigrationStatus)Random.Range(0, 4);
         transform.Find("NameText").GetComponent<Text>().text = "Name: " + characterName;
-        transform.Find("MigrationText").GetComponent<Text>().text = "Migration Status: " + GetMirationStatusText();
+        transform.Find("MigrationText").GetComponent<Text>().text = "Status: " + GetMirationStatusText();
         transform.Find("RoleText").GetComponent<Text>().text = "Role: " + job.roleName;
         //transform.Find("ProsperityBar").Find("Slider").GetComponent<RectTransform>().anchoredPosition = new Vector2(prosperityOffset, 0.0f);
     }
@@ -81,6 +80,7 @@ public class CharacterScript : MonoBehaviour {
         }
         if (prosperityCounter < -prosperityMax)
         {
+            //Player is out of the Game!
             prosperityCounter = -prosperityMax;
         }
 
