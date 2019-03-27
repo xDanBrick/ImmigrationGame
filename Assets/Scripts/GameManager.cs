@@ -12,6 +12,8 @@ public class TableMessage : MessageBase
 public class GameManager : NetworkManager {
 
     private List<PlayerScript> players = new List<PlayerScript>();
+    private List<Character> characters = new List<Character>();
+
     private int currentPlayerIndex = 0;
 
     private GameObject playerText;
@@ -38,6 +40,12 @@ public class GameManager : NetworkManager {
         }
 
         OnUpdateTurn();
+    }
+
+    void CreatePlayerDeck()
+    {
+       //private List<string> names = new List<string>(Characters.names);
+
     }
 
     void OnUpdateTurn()

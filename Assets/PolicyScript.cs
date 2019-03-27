@@ -23,11 +23,19 @@ public class PolicyScript : MonoBehaviour {
 
     public void OnPolicyChange()
     {
-        GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerScript>().SelectPolicy(gameObject);
+        for (int i = 0; i < transform.parent.childCount; ++i)
+        {
+            if (transform.parent.GetChild(i) == transform)
+            {
+                GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerScript>().SelectPolicy(i);
+                return;
+            }
+        }
+        
     }
 
     public void Vote()
     {
-        GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerScript>().SelectVote();
+       // GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerScript>().SelectVote();
     }
 }
