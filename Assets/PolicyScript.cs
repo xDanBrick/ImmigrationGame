@@ -27,7 +27,11 @@ public class PolicyScript : MonoBehaviour {
         {
             if (transform.parent.GetChild(i) == transform)
             {
-                GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerScript>().SelectPolicy(i);
+                GameObject player = GameObject.FindGameObjectWithTag("Player");
+                if(player)
+                {
+                    player.GetComponent<PlayerScript>().SelectPolicy(i);
+                }
                 return;
             }
         }

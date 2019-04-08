@@ -4,9 +4,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Networking;
 
-public class TableMessage : MessageBase
+public class CharacterSet : MessageBase
 {
-    public bool msgData;
+    public Character[] characters;
 }
 
 public class GameManager : NetworkManager {
@@ -44,8 +44,45 @@ public class GameManager : NetworkManager {
 
     void CreatePlayerDeck()
     {
-       //private List<string> names = new List<string>(Characters.names);
+        Debug.Log("Player Deck Created");
+        List<string> names = new List<string>(Characters.names);
+        List<string> tierOne = new List<string>(Characters.tierOneJobs);
+        List<string> tierTwo = new List<string>(Characters.tierTwoJobs);
+        List<string> tierThree = new List<string>(Characters.tierThreeJobs);
 
+        for(int i = 0; i < 12; ++i)
+        {
+            int randomIndex = Random.Range(0, names.Count);
+            Character character = new Character();
+            character.name = names[randomIndex];
+            names.Remove(character.name);
+            character.isMale = randomIndex < 6;
+            character.migrationStatus = (MigrationStatus)Random.Range(0, 4);
+            switch (character.migrationStatus)
+            {
+                case MigrationStatus.local:
+                    {
+                        character.roleName = tierThree[Random.Range(0, tierThree.Count)];
+                        break;
+                    }
+                case MigrationStatus.student:
+                    {
+                        character.roleName = "Student";
+                        break;
+                    }
+                case MigrationStatus.undocumented:
+                    {
+                        character.roleName = tierOne[Random.Range(0, tierOne.Count)];
+                        break;
+                    }
+                case MigrationStatus.working:
+                    {
+                        character.roleName = tierTwo[Random.Range(0, tierTwo.Count)];
+                        break;
+                    }
+            }
+            characters.Add(character);
+        }
     }
 
     void OnUpdateTurn()
@@ -90,12 +127,18 @@ public class GameManager : NetworkManager {
         var player = (GameObject)GameObject.Instantiate(playerPrefab, Vector3.zero, Quaternion.identity);
 
         NetworkServer.AddPlayerForConnection(conn, player, playerControllerId);
-
-        if(NetworkServer.connections.Count == 1)
+        CharacterSet msg = new CharacterSet();
+        msg.characters = new Character[3];
+        for (int i = 0; i < 3; ++i)
         {
-            TableMessage msg = new TableMessage();
-            conn.Send(MsgType.Highest + 5, msg);
+            msg.characters[i] = characters[i];
         }
+
+        characters.RemoveRange(0, 3);
+
+        player.GetComponent<PlayerScript>().RpcOnRecievePolicies(msg, conn.connectionId);
+        Debug.Log("Player Control Id " + conn.connectionId);
+        //conn.Send(MsgType.Highest + 5, msg);
 
         Debug.Log("Client has requested to get his player added to the game");
 
@@ -119,7 +162,7 @@ public class GameManager : NetworkManager {
 
     public override void OnStartHost()
     {
-
+        CreatePlayerDeck();
         Debug.Log("Host has started");
 
     }

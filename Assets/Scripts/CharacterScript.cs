@@ -5,26 +5,15 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
 public enum MigrationStatus { local, student, undocumented, working };
-public enum RoleType { skilled, unskilled, management, owner, student, unemployed, retired };
-
-public class Job
-{ 
-    public Job(RoleType type, string name)
-    {
-        roleType = type;
-        roleName = name;
-    }
-    public RoleType roleType;
-    public string roleName;
-}
 
 public class CharacterScript : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
-    private const int prosperityMax = 70;
+    private const int prosperityMax = 33;
 
     private int prosperityCounter = 0;
-    private Job job;
     private string characterName;
+    private string jobName;
+    private bool isMale = false;
     private MigrationStatus migrationStatus;
 
     string GetMirationStatusText()
@@ -42,15 +31,15 @@ public class CharacterScript : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        ChangeAlpha(true);
+        EnableMask(true);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        ChangeAlpha(false);
+        EnableMask(false);
     }
 
-    void ChangeAlpha(bool enabled)
+    void EnableMask(bool enabled)
     {
         transform.Find("TextMask").GetComponent<Image>().enabled = enabled;
         transform.Find("CharacterText").GetComponent<Text>().enabled = enabled;
@@ -63,18 +52,23 @@ public class CharacterScript : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
     // Use this for initialization
     void Start () {
-        characterName = Characters.names[Random.Range(0, 12)];
-        job = Characters.jobs[Random.Range(0, 12)];
-        migrationStatus = (MigrationStatus)Random.Range(0, 4);
-        transform.Find("NameText").GetComponent<Text>().text = characterName;
-        transform.Find("CharacterText").GetComponent<Text>().text = "Status: " + GetMirationStatusText() + "\n\nRole: " + job.roleName;
-        //transform.Find("ProsperityBar").Find("Slider").GetComponent<RectTransform>().anchoredPosition = new Vector2(prosperityOffset, 0.0f);
     }
 	
 	// Update is called once per frame
 	void Update () {
 		
 	}
+
+    public void InitCharacter(Character character)
+    {
+        characterName = character.name;
+        jobName = character.roleName;
+        migrationStatus = character.migrationStatus;
+        isMale = character.isMale;
+        transform.Find("NameText").GetComponent<Text>().text = characterName;
+        transform.Find("CharacterText").GetComponent<Text>().text = "Status: " + GetMirationStatusText() + "\n\nRole: " + jobName;
+        //transform.Find("ProsperityBar").Find("Slider").GetComponent<RectTransform>().anchoredPosition = new Vector2(prosperityOffset, 0.0f);
+    }
 
     public void OnPolicyCard(PolicyCard card)
     {
