@@ -17,7 +17,7 @@ public class TitleMenu : MonoBehaviour {
     public void JoinGame()
     {
         SceneManager.LoadScene(gameScene);
-        NetworkManager.singleton.StartServer();
+        NetworkManager.singleton.StartClient();
     }
 
     public void QuitGame()
