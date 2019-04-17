@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PolicyScript : MonoBehaviour {
 
@@ -15,31 +16,28 @@ public class PolicyScript : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		if(Input.GetKeyDown(KeyCode.Return))
-        {
-
-        }
 	}
 
-    public void OnPolicyChange()
+    public void setPolicy(PolicyCard card)
     {
-        for (int i = 0; i < transform.parent.childCount; ++i)
+        Text text = GetComponentInChildren<Text>();
+        switch (card.policyType)
         {
-            if (transform.parent.GetChild(i) == transform)
+            case PolicyType.MigrationStatus:
             {
-                GameObject player = GameObject.FindGameObjectWithTag("Player");
-                if(player)
-                {
-                    player.GetComponent<PlayerScript>().SelectPolicy(i);
-                }
-                return;
+                text.text = "Migration";
+                break;
+            }
+            case PolicyType.Occupation:
+            {
+                text.text = "Occupation";
+                break;
+            }
+            case PolicyType.OccupationHierarchy:
+            {
+                text.text = "OccupationHierarchy";
+                break;
             }
         }
-        
-    }
-
-    public void Vote()
-    {
-       // GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerScript>().SelectVote();
     }
 }

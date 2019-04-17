@@ -122,5 +122,5 @@ MonoBehaviour:
   matchSize: 4
   isNetworkActive: 0
   matchMaker: {fileID: 0}
-  policyButton: {fileID: 1631459598838980, guid: a6a12569f3cca0745b02e18a3e516aad,
+  serverPrefab: {fileID: 1060585600914122, guid: 3bada9412e3363c478fb58d131ec60f2,
     type: 2}

@@ -26,11 +26,6 @@ public struct PolicyCard
     public int prosperityCount;
 }
 
-public class GameStuff
-{
-    public static int playerIndex = 0;
-}
-
 public class Characters
 {
     public const int characterCount = 12;
@@ -62,14 +57,6 @@ public struct Character
 
 public class PlayerScript : NetworkBehaviour
 {
-    private List<GameObject> policies = new List<GameObject>();
-    private GameObject votePolicy = null;
-    public bool isCurrentPlayer = false;
-    private uint playerIndex = 0;
-
-    [SyncVar]
-    bool isVoting = false;
-
     [SerializeField] GameObject policyButton;
 
     //public void OnRecievePolicies(NetworkMessage netMsg)
@@ -99,81 +86,35 @@ public class PlayerScript : NetworkBehaviour
     //    //OnUpdateTurn();
     //}
 
-    public class ConnectInfo : MessageBase
-    {
-        public int index;
-    }
-
-    //void OnConnect(NetworkMessage msg)
-    //{
-    //    ConnectInfo info = msg.ReadMessage<ConnectInfo>();
-    //    playerIndex = info.index;
-    //    //Debug.Log(playerIndex);
-    //}
-
     void Start () {
     }
 
     // Update is called once per frame
     void Update()
     {
-        if(!isLocalPlayer)
+    }
+
+    
+
+    [ClientRpc]
+    public void RpcRecievePolicies(PolicyCard[] cards)
+    {
+        if (!isLocalPlayer)
         {
             return;
         }
-        if (Input.GetKeyDown(KeyCode.Return))
-        {
-            
-            if(isVoting)
-            {
-                if (votePolicy)
-                {
-                    votePolicy.GetComponent<Image>().color = Color.white;
-                    CmdSendVote(new PolicyCard());
-                    votePolicy = null;
-                }
-                
-            }
-            else
-            {
-                OnPolicySet();
-                isVoting = true;
-            }
-            
-        }
-    }
 
-    public void OnPolicySet()
-    {
-        if (policies.Count == 2)
+        GameObject policyParent = GameObject.Find("PolicyChoices");
+        for (int i = 0; i < policyParent.transform.childCount; ++i)
         {
-            int discardIndex = -1;
-            GameObject policyParent = GameObject.Find("PolicyChoices");
-            for (int i = 0; i < policyParent.transform.childCount; ++i)
-            {
-                bool isChosen = false;
-                for (int j = 0; j < policies.Count; ++j)
-                {
-                    if(policyParent.transform.GetChild(i).gameObject == policies[j])
-                    {
-                        isChosen = true;
-                        policyParent.transform.GetChild(i).GetComponent<Image>().color = Color.white;
-                    }
-                }
-                if(!isChosen)
-                {
-                    discardIndex = i;
-                }
-            }
-            CmdSendChoices(discardIndex);
-            policies.Clear();
+            Transform policyButton = policyParent.transform.GetChild(i);
+            policyButton.GetComponent<PolicyScript>().setPolicy(cards[i]);
         }
     }
 
     [Command]
-    void CmdSendChoices(int discardChoice)
+    public void CmdSendChoices(int discardChoice)
     {
-        //GameObject.Find("PlayerText").GetComponent<Text>().text = "Choices Recieved On Server";
         RpcSendChoicesToClient(discardChoice);
     }
 
@@ -184,8 +125,6 @@ public class PlayerScript : NetworkBehaviour
         {
             return;
         }
-
-        Debug.Log(netId.Value);
 
         if (netId.Value == 1)
         {
@@ -264,65 +203,43 @@ public class PlayerScript : NetworkBehaviour
     [ClientRpc]
     void RpcSendChoicesToClient(int discardChoice)
     {
-        GameObject.Find("PolicyChoices").transform.GetChild(discardChoice).GetComponent<Image>().color = Color.red;
-    }
-
-    [Command]
-    void CmdSendVote(PolicyCard choices)
-    {
-        RpcSendVotesToClient(choices);
+        GameObject.Find("PolicyChoices").GetComponent<PolicyCards>().OnVoting(discardChoice);
     }
 
     [ClientRpc]
-    void RpcSendVotesToClient(PolicyCard choices)
+    public void RpcSendVote(int index)
     {
-        GameObject.Find("PlayerText").GetComponent<Text>().text = "Votes Recieved";
+        if(!isServer)
+        {
+            return;
+        }
+        Debug.Log(index);
+        GameObject.Find("ServerManager").GetComponent<ServerManager>().AddVote(index);
     }
 
-    public void SelectPolicy(int index)
+    [ClientRpc]
+    public void RpcUpdatePolicyCard(PolicyCard choices)
     {
-        GameObject policyButton = GameObject.Find("PolicyChoices").transform.GetChild(index).gameObject;
-        if (isVoting)
+        if (!isLocalPlayer)
         {
-            if(votePolicy)
-            {
-                votePolicy.GetComponent<Image>().color = Color.white;
-            }
-            votePolicy = policyButton;
-            policyButton.GetComponent<Image>().color = Color.green;
+            return;
         }
-        else
+
+        Transform characters = GameObject.Find("Characters").transform;
+        for (int j = 0; j < characters.childCount; ++j)
         {
-            
-            bool add = false;
-            for (int i = 0; i < policies.Count; ++i)
-            {
-                if (policies[i] == policyButton)
-                {
-                    policies.Remove(policyButton);
-                    add = true;
-                    break;
-                }
-            }
-            if (!add)
-            {
-                if (policies.Count < 2)
-                {
-                    policies.Add(policyButton);
-                    Transform characters = GameObject.Find("Characters").transform;
-                    for (int i = 0; i < characters.childCount; ++i)
-                    {
-                        PolicyCard card = new PolicyCard();
-                        card.ammount = 5;
-                        characters.GetChild(i).GetComponent<CharacterScript>().OnPolicyCard(card);
-                    }
-                }
-                else
-                {
-                    return;
-                }
-            }
-            policyButton.GetComponent<Image>().color = add ? Color.white : Color.green;
+            characters.GetChild(j).GetComponent<CharacterScript>().OnPolicyCard(choices);
         }
+    }
+
+    [ClientRpc]
+    public void RpcBeginTurn(int index)
+    {
+        if(!isLocalPlayer)
+        {
+            return;
+        }
+
+        GameObject.Find("PolicyChoices").GetComponent<PolicyCards>().OnRoundBegin((index + 1) == netId.Value);
     }
 }

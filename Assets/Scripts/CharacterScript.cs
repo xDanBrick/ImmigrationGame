@@ -89,6 +89,8 @@ public class CharacterScript : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
     public void OnPolicyCard(PolicyCard card)
     {
+        IncrementCounter(10);
+        return;
         prosperityCounter += card.ammount;
         
         switch (card.policyType)
