@@ -26,9 +26,16 @@ public class PolicyCards : MonoBehaviour {
        
     }
 
+    void setChildColor(int index, Color color)
+    {
+        Transform child = transform.GetChild(index);
+        child.Find("PolicyBorder").GetComponent<Image>().color = color;
+        child.Find("PolicyImage").GetComponent<Image>().color = color;
+    }
+
     public void OnVoting(int discardChoice)
     {
-        transform.GetChild(discardChoice).GetComponent<Image>().color = Color.red;
+        setChildColor(discardChoice, Color.red);
 
         discardIndex = discardChoice;
         if(currentState == SelectionState.waiting)
@@ -55,7 +62,7 @@ public class PolicyCards : MonoBehaviour {
         //Reset Colors
         for (int i = 0; i < transform.childCount; ++i)
         {
-            transform.GetChild(i).GetComponent<Image>().color = Color.white;
+            setChildColor(i, Color.white);
         }
     }
 
@@ -63,22 +70,21 @@ public class PolicyCards : MonoBehaviour {
     {
         if (currentState != SelectionState.waiting)
         {
-            GameObject policyButton = transform.GetChild(index).gameObject;
             if (currentState == SelectionState.votingOnPolicy)
             {
                 if (index != discardIndex)
                 {
                     if (votePolicyIndex != -1)
                     {
-                        transform.GetChild(votePolicyIndex).GetComponent<Image>().color = Color.white;
+                        setChildColor(votePolicyIndex, Color.white);
                     }
                     votePolicyIndex = index;
-                    policyButton.GetComponent<Image>().color = Color.green;
+                    setChildColor(index, Color.green);
                 }
             }
             else
             {
-
+                GameObject policyButton = transform.GetChild(index).gameObject;
                 bool add = false;
                 for (int i = 0; i < policies.Count; ++i)
                 {
@@ -94,20 +100,13 @@ public class PolicyCards : MonoBehaviour {
                     if (policies.Count < 2)
                     {
                         policies.Add(policyButton);
-                        Transform characters = GameObject.Find("Characters").transform;
-                        for (int i = 0; i < characters.childCount; ++i)
-                        {
-                            PolicyCard card = new PolicyCard();
-                            card.ammount = 5;
-                            characters.GetChild(i).GetComponent<CharacterScript>().OnPolicyCard(card);
-                        }
                     }
                     else
                     {
                         return;
                     }
                 }
-                policyButton.GetComponent<Image>().color = add ? Color.white : Color.green;
+                setChildColor(index, add ? Color.white : Color.green);
             }
         }
     }
@@ -118,17 +117,10 @@ public class PolicyCards : MonoBehaviour {
         {
             if (currentState == SelectionState.votingOnPolicy)
             {
-                //for (int i = 0; i < transform.childCount; ++i)
-                //{
-                //    transform.GetChild(i).GetComponent<Image>().color = Color.white;
-                //}
-                var players = GameObject.FindGameObjectsWithTag("Player");
-                for (int i = 0; i < players.Length; ++i)
-                {
-                    players[i].GetComponent<PlayerScript>().RpcSendVote(votePolicyIndex);
-                }
-                //GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerScript>().RpcSendVote(votePolicyIndex);
-                //Debug.Log("VoteSent");
+                GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerScript>().CmdSendVote(votePolicyIndex);
+
+                setChildColor(votePolicyIndex, Color.white);
+
                 discardIndex = -1;
                 votePolicyIndex = -1;
                 currentState = SelectionState.waiting;
@@ -145,8 +137,8 @@ public class PolicyCards : MonoBehaviour {
                         {
                             if (transform.GetChild(i).gameObject == policies[j])
                             {
+                                setChildColor(i, Color.white);
                                 isChosen = true;
-                                transform.GetChild(i).GetComponent<Image>().color = Color.white;
                             }
                         }
                         if (!isChosen)

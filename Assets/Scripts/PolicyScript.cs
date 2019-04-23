@@ -2,8 +2,25 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
-public class PolicyScript : MonoBehaviour {
+public class PolicyScript : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+{
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        transform.Find("PolicyImage").GetComponent<Image>().enabled = false;
+        transform.Find("PolicyText").GetComponent<Text>().enabled = false;
+        transform.Find("PolicyText 2").GetComponent<Text>().enabled = true;
+        
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        transform.Find("PolicyImage").GetComponent<Image>().enabled = true;
+        transform.Find("PolicyText").GetComponent<Text>().enabled = true;
+        transform.Find("PolicyText 2").GetComponent<Text>().enabled = false;
+    }
 
     // Use this for initialization
     int m_PolicyModifier = 0;

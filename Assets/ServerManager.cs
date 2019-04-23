@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class ServerManager : MonoBehaviour {
 
@@ -204,6 +205,8 @@ public class ServerManager : MonoBehaviour {
     public void AddVote(int index)
     {
         policyVotes[index]++;
+        GameObject.Find("PolicyChoices").transform.GetChild(index).Find("VoteCount").GetComponent<Text>().text = policyVotes[index].ToString();
+
         ++voteCounter;
 
         Debug.Log("Vote Recieved " + voteCounter.ToString());

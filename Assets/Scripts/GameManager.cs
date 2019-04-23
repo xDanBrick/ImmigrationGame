@@ -30,7 +30,6 @@ public class GameManager : NetworkManager {
 
     public override void OnServerConnect(NetworkConnection conn)
     {
-
         Debug.Log("A client connected to the server: " + conn);
     }
 
@@ -47,7 +46,6 @@ public class GameManager : NetworkManager {
         }
 
         Debug.Log("A client disconnected from the server: " + conn);
-
     }
 
     public override void OnServerReady(NetworkConnection conn)
@@ -56,13 +54,6 @@ public class GameManager : NetworkManager {
         NetworkServer.SetClientReady(conn);
 
         Debug.Log("Client is set to the ready state (ready to receive state updates): " + conn);
-
-        
-        if (conn.connectionId == 3)
-        {
-            serverManager.DistributeCharacters();
-            serverManager.DistributePolicies();
-        }
     }
 
     public override void OnServerAddPlayer(NetworkConnection conn, short playerControllerId)
@@ -71,7 +62,7 @@ public class GameManager : NetworkManager {
         NetworkServer.AddPlayerForConnection(conn, player, playerControllerId);
         Debug.Log("Client has requested to get his player added to the game");
 
-        if (conn.connectionId == 3)
+        if (NetworkServer.connections.Count == 4)
         {
             serverManager.DistributeCharacters();
             serverManager.DistributePolicies();
@@ -90,17 +81,15 @@ public class GameManager : NetworkManager {
 
     public override void OnServerError(NetworkConnection conn, int errorCode)
     {
-
         Debug.Log("Server network error occurred: " + (NetworkError)errorCode);
-
     }
 
     public override void OnStartHost()
     {
         var player = GameObject.Instantiate(serverPrefab, Vector3.zero, Quaternion.identity);
+        player.name = "ServerManager";
         serverManager = player.GetComponent<ServerManager>();
         Debug.Log("Host has started");
-
     }
 
     public override void OnStartServer()
@@ -180,5 +169,4 @@ public class GameManager : NetworkManager {
         base.OnClientSceneChanged(conn);
         Debug.Log("Server triggered scene change and we've done the same, do any extra work here for the client...");
     }
-
 }

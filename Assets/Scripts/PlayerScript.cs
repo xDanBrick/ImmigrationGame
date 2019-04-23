@@ -129,18 +129,22 @@ public class PlayerScript : NetworkBehaviour
         if (netId.Value == 1)
         {
             SetCharacters(characterSet.characters, characterSet.characters2, characterSet.characters3, characterSet.characters4);
+            SetCharacterNames(2, 3, 4);
         }
         else if (netId.Value == 2)
         {
             SetCharacters(characterSet.characters2, characterSet.characters, characterSet.characters3, characterSet.characters4);
+            SetCharacterNames(1, 3, 4);
         }
         else if (netId.Value == 3)
         {
             SetCharacters(characterSet.characters3, characterSet.characters, characterSet.characters2, characterSet.characters4);
+            SetCharacterNames(1, 2, 4);
         }
         else if (netId.Value == 4)
         {
             SetCharacters(characterSet.characters4, characterSet.characters, characterSet.characters2, characterSet.characters3);
+            SetCharacterNames(1, 2, 3);
         }
         //if(playerId == playerIndex)
         //{
@@ -176,6 +180,15 @@ public class PlayerScript : NetworkBehaviour
         //}
     }
 
+    void SetCharacterNames(uint index2, uint index3, uint index4)
+    {
+        GameObject.Find("MainPlayerText").GetComponent<Text>().text = "Player " + netId.Value.ToString();
+        GameObject.Find("OtherPlayerText1").GetComponent<Text>().text = "Player " + index2.ToString();
+        GameObject.Find("OtherPlayerText2").GetComponent<Text>().text = "Player " + index3.ToString();
+        GameObject.Find("OtherPlayerText3").GetComponent<Text>().text = "Player " + index4.ToString();
+
+    }
+
     void SetCharacters(Character[] mainCharacters, Character[] character1, Character[] character2, Character[] character3)
     {
         Transform characters = GameObject.Find("Characters").transform;
@@ -203,18 +216,22 @@ public class PlayerScript : NetworkBehaviour
     [ClientRpc]
     void RpcSendChoicesToClient(int discardChoice)
     {
+        GameObject.Find("InfoText").GetComponent<Text>().text = "Vote on a policy!";
         GameObject.Find("PolicyChoices").GetComponent<PolicyCards>().OnVoting(discardChoice);
     }
 
-    [ClientRpc]
-    public void RpcSendVote(int index)
+    [Command]
+    public void CmdSendVote(int index)
     {
-        if(!isServer)
-        {
-            return;
-        }
-        Debug.Log(index);
-        GameObject.Find("ServerManager").GetComponent<ServerManager>().AddVote(index);
+        RpcVoteToClient(index);
+        //GameObject.Find("ServerManager").GetComponent<ServerManager>().AddVote(index);
+    }
+
+    [ClientRpc]
+    void RpcVoteToClient(int index)
+    {
+        GameObject.Find("PolicyChoices").transform.GetChild(index).Find("VoteCount").GetComponent<Text>().text = "Works";
+
     }
 
     [ClientRpc]
@@ -240,6 +257,7 @@ public class PlayerScript : NetworkBehaviour
             return;
         }
 
+        GameObject.Find("InfoText").GetComponent<Text>().text = "Player " + (index + 1).ToString() + ": Choose 2 policies to put to a vote";
         GameObject.Find("PolicyChoices").GetComponent<PolicyCards>().OnRoundBegin((index + 1) == netId.Value);
     }
 }
