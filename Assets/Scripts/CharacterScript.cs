@@ -17,6 +17,8 @@ public class CharacterScript : MonoBehaviour, IPointerEnterHandler, IPointerExit
     private MigrationStatus migrationStatus;
     private JobTier jobTier;
     private string proffession;
+    private string relationshipName;
+    private CharacterScript relationshipScript;
 
     string GetMirationStatusText()
     {
@@ -61,14 +63,58 @@ public class CharacterScript : MonoBehaviour, IPointerEnterHandler, IPointerExit
 		
 	}
 
+    
     public void InitCharacter(Character character)
     {
         characterName = character.name;
+        relationshipName = character.relationshipName;
         jobName = character.roleName;
         migrationStatus = character.migrationStatus;
         isMale = character.isMale;
         transform.Find("NameText").GetComponent<Text>().text = characterName;
-        transform.Find("CharacterText").GetComponent<Text>().text = "Status: " + GetMirationStatusText() + "\n\nRole: " + jobName;
+        transform.Find("CharacterText").GetComponent<Text>().text = "Status: " + GetMirationStatusText() + "\n\nRole: " + jobName + "\n\nRelationship: " + relationshipName;
+
+        string resourceName = "WRONG";
+
+        if(jobName == "Buisness Manager" || jobName == "Buisness Worker" || jobName == "Buisness Owner")
+        {
+            resourceName = "Manager";
+        }
+        else if(jobName == "Paralegal" || jobName == "Lawyer" || jobName == "Judge")
+        {
+            resourceName = "Lawyer";
+        }
+        else if (jobName == "Doctor" || jobName == "Nurse")
+        {
+            resourceName = "Doctor";
+        }
+        else if (jobName == "Student")
+        {
+            resourceName = "Student";
+        }
+        else if(jobName == "Retired" || jobName == "Unemployed")
+        {
+            resourceName = "None";
+        }
+        else if (jobName == "Shop Owner" || jobName == "Retail Worker")
+        {
+            resourceName = "Retail";
+        }
+        else if (jobName == "Plumber")
+        {
+            resourceName = "Overall";
+        }
+        else if (jobName == "Police")
+        {
+            resourceName = "Police";
+        }
+
+        var sprite = Resources.Load<Sprite>(isMale ? "idmale" : "idfemale");
+
+        transform.Find("PersonPart").Find("PersonFigure").GetComponent<Image>().sprite = sprite;
+        transform.Find("RolePart").Find("RoleOutline").GetComponent<Image>().sprite = Resources.Load<Sprite>("Role" + (isMale ? "Male" : "Female"));
+        transform.Find("RolePart").Find("RoleFigure").GetComponent<Image>().sprite = Resources.Load<Sprite>(resourceName + (isMale ? "Male" : "Female"));
+
         //transform.Find("ProsperityBar").Find("Slider").GetComponent<RectTransform>().anchoredPosition = new Vector2(prosperityOffset, 0.0f);
     }
 
@@ -87,11 +133,47 @@ public class CharacterScript : MonoBehaviour, IPointerEnterHandler, IPointerExit
         transform.Find("ProsperityBar").Find("Slider").GetComponent<RectTransform>().anchoredPosition = new Vector2((float)prosperityCounter, 0.0f);
     }
 
-    public void OnPolicyCard(PolicyCard card)
+    public void SetRelationship()
     {
-        IncrementCounter(10);
-        return;
-        prosperityCounter += card.ammount;
+        Transform characters = GameObject.Find("Characters").transform;
+        for (int j = 0; j < characters.childCount; ++j)
+        {
+            if(characters.GetChild(j).GetComponent<CharacterScript>().relationshipName == relationshipName)
+            {
+                relationshipScript = characters.GetChild(j).GetComponent<CharacterScript>();
+                return;
+            }
+        }
+        characters = GameObject.Find("OtherCharacters").transform;
+        for (int i = 0; i < characters.childCount; ++i)
+        {
+            for (int j = 0; j < characters.GetChild(i).childCount; ++j)
+            {
+                if (characters.GetChild(i).GetChild(j).GetComponent<CharacterScript>().relationshipName == relationshipName)
+                {
+                    relationshipScript = characters.GetChild(i).GetChild(j).GetComponent<CharacterScript>();
+                    return;
+                }
+            }
+        }
+    }
+
+    public void OnPolicyCard(PolicyCard card, bool isRelationship)
+    {
+        int ammount = card.ammount;
+        if(isRelationship)
+        {
+            ammount /= 2;
+            if(ammount > 0)
+            {
+                --ammount;
+            }
+            
+        }
+        else
+        {
+            relationshipScript.OnPolicyCard(card, true);
+        }
         
         switch (card.policyType)
         {

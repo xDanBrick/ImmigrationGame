@@ -28,9 +28,14 @@ public class ServerManager : MonoBehaviour {
 
     void ResetPolicyVotes()
     {
+        GameObject policyChoices = GameObject.Find("PolicyChoices");
         for (int i = 0; i < policyVotes.Length; ++i)
         {
             policyVotes[i] = 0;
+            if(policyChoices)
+            {
+                policyChoices.transform.GetChild(i).Find("VoteCount").GetComponent<Text>().text = "0";
+            }
         }
     }
 
@@ -43,8 +48,11 @@ public class ServerManager : MonoBehaviour {
         List<string> tierTwo = new List<string>(Characters.tierTwoJobs);
         List<string> tierThree = new List<string>(Characters.tierThreeJobs);
 
+        int relationshipCount = 0;
+
         for (int i = 0; i < 12; ++i)
         {
+            ++relationshipCount;
             int randomIndex = Random.Range(0, names.Count);
             Character character = new Character();
             character.name = names[randomIndex];
@@ -74,6 +82,14 @@ public class ServerManager : MonoBehaviour {
                         break;
                     }
             }
+            if (relationshipCount == 2)
+            {
+                relationshipCount = 0;
+                var item = characters[characters.Count - 1];
+                item.relationshipName = character.name;
+                character.relationshipName = item.name;
+            }
+
             characters.Add(character);
         }
 
@@ -100,6 +116,7 @@ public class ServerManager : MonoBehaviour {
         card.tierOne = tier;
         card.tierTwo = tier2;
         card.policyIndex = index;
+        card.ammount = Random.Range(1, 20);
         policyDeck.Add(card);
     }
 
@@ -115,9 +132,9 @@ public class ServerManager : MonoBehaviour {
     {
         //CATEGORY ONE
         //+- Based on proffession
-        for (int i = 0; i < 7; ++i)
+        for (int i = 0; i < Characters.professions.Length; ++i)
         {
-            for (int j = 0; j < 3; ++j)
+            for (int j = 0; j < 2; ++j)
             {
                 AddPolicyCard(PolicyType.Occupation, j, Characters.professions[i], "", JobTier.tierOne, JobTier.tierOne);
             }
@@ -144,7 +161,7 @@ public class ServerManager : MonoBehaviour {
                 }
             }
 
-            AddPolicyCard(PolicyType.OccupationHierarchy, 1, "", "", (JobTier)i, 0);
+            //AddPolicyCard(PolicyType.OccupationHierarchy, 1, "", "", (JobTier)i, 0);
             AddPolicyCard(PolicyType.OccupationHierarchy, 2, "", "", (JobTier)i, 0);
             AddPolicyCard(PolicyType.OccupationHierarchy, 3, "", "", (JobTier)i, 0);
         }
@@ -200,21 +217,21 @@ public class ServerManager : MonoBehaviour {
             players[i].GetComponent<PlayerScript>().RpcBeginTurn(currentPlayerIndex);
         }
         ++currentPlayerIndex;
+        if(currentPlayerIndex == 4)
+        {
+            currentPlayerIndex = 0;
+        }
     }
 
     public void AddVote(int index)
     {
         policyVotes[index]++;
-        GameObject.Find("PolicyChoices").transform.GetChild(index).Find("VoteCount").GetComponent<Text>().text = policyVotes[index].ToString();
-
+        GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerScript>().RpcSendVotesToClient(index, policyVotes[index]);
         ++voteCounter;
-
-        Debug.Log("Vote Recieved " + voteCounter.ToString());
 
         //If all the votes are recieved
         if (voteCounter == 3)
         {
-            
             int highest = 0;
             int voteIndex = 0;
             for(int i = 0; i < policyVotes.Length; ++i)

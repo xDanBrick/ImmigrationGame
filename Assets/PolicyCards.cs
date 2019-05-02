@@ -8,6 +8,7 @@ public class PolicyCards : MonoBehaviour {
     private List<GameObject> policies = new List<GameObject>();
     public int discardIndex = -1;
     private int votePolicyIndex = -1;
+    private int yearsPast = 0;
 
     enum SelectionState
     {
@@ -50,7 +51,10 @@ public class PolicyCards : MonoBehaviour {
 
     public void OnRoundBegin(bool isTurn)
     {
-        if(isTurn)
+        GameObject.Find("YearsText").GetComponent<Text>().text = "Years Past: " + yearsPast.ToString();
+        ++yearsPast;
+
+        if (isTurn)
         {
             currentState = SelectionState.choosePolicies;
         }
@@ -64,6 +68,16 @@ public class PolicyCards : MonoBehaviour {
         {
             setChildColor(i, Color.white);
         }
+
+        Transform voteCount = GameObject.Find("PolicyChoices").transform;
+        for(int i = 0; i < voteCount.childCount; ++i)
+        {
+            voteCount.GetChild(i).Find("VoteCount").GetComponent<Text>().text = "0";
+        }
+
+        discardIndex = -1;
+        votePolicyIndex = -1;
+        policies.Clear();
     }
 
     public void SelectPolicy(int index)
@@ -117,7 +131,9 @@ public class PolicyCards : MonoBehaviour {
         {
             if (currentState == SelectionState.votingOnPolicy)
             {
-                GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerScript>().CmdSendVote(votePolicyIndex);
+                PlayerScript.GetLocalPlayer().SendVote(votePolicyIndex);
+
+                GameObject.Find("InfoText").GetComponent<Text>().text = "Waiting on other Players";
 
                 setChildColor(votePolicyIndex, Color.white);
 
@@ -146,7 +162,8 @@ public class PolicyCards : MonoBehaviour {
                             discardIndex = i;
                         }
                     }
-                    GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerScript>().CmdSendChoices(discardIndex);
+
+                    PlayerScript.GetLocalPlayer().SendChoices(discardIndex);
                     policies.Clear();
                 }
             }

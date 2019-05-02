@@ -29,13 +29,13 @@ public struct PolicyCard
 public class Characters
 {
     public const int characterCount = 12;
-    public static string[] professions = new string[7] { "Business", "Healthcare", "Legal", "Shop", "Retired", "Unemployed", "Student" };
+    public static string[] professions = new string[9] { "Civil", "Trade", "Business", "Healthcare", "Legal", "Shop", "Retired", "Unemployed", "Student" };
     public static string[] names = new string[characterCount] { "Will",  "Jim", "John", "Steve", "Chris", "Ommar", "Annie", "Leanne", "Steph", "Karen", "Megan", "Alanah" };
-    public static string[] tierOneJobs = new string[2] {
-        "Buiness Manager", "Buisness Worker"
+    public static string[] tierOneJobs = new string[4] {
+        "Buisness Manager", "Buisness Worker", "Retail Worker", "Plumber"
     };
-    public static string[] tierTwoJobs = new string[3] {
-        "Buiness Owner", "Paralegal", "Shop Owner"
+    public static string[] tierTwoJobs = new string[4] {
+        "Buiness Owner", "Paralegal", "Shop Owner", "Police"
     };
     public static string[] tierThreeJobs = new string[4] {
         "Doctor", "Nurse", "Lawyer", "Judge",
@@ -52,39 +52,13 @@ public struct Character
     public MigrationStatus migrationStatus;
     public string roleName;
     public JobTier jobTier;
+    public string relationshipName;
 }
 
 
 public class PlayerScript : NetworkBehaviour
 {
     [SerializeField] GameObject policyButton;
-
-    //public void OnRecievePolicies(NetworkMessage netMsg)
-    //{
-    //    //CharacterSet characterSet = netMsg.ReadMessage<CharacterSet>();
-    //    //Transform characters = GameObject.Find("Characters").transform;
-    //    //for (int i = 0; i < characters.childCount; ++i)
-    //    //{
-    //    //    //characters.GetChild(i).GetComponent<CharacterScript>().InitCharacter(characterSet.characters[i]);
-    //    //}
-
-    //    //GameObject policyParent = GameObject.Find("PolicyChoices");
-    //    //for (int i = 0; i < policyParent.transform.childCount; ++i)
-    //    //{
-    //    //    Transform policyButton = policyParent.transform.GetChild(i);
-    //    //    bool positive = Random.Range(0, 2) == 0 ? true : false;
-    //    //    int ammount = Random.Range(1, 20);
-    //    //    string line = (positive ? "+ " : "- ") + ammount.ToString();
-
-    //    //    if (!positive)
-    //    //    {
-    //    //        ammount = -ammount;
-    //    //    }
-    //    //    policyButton.GetComponent<PolicyScript>().policyModifier = ammount;
-    //    //    policyButton.GetComponentInChildren<Text>().text = "Policy " + (i + 1).ToString() + "\n\n" + line;
-    //    //}
-    //    //OnUpdateTurn();
-    //}
 
     void Start () {
     }
@@ -94,7 +68,19 @@ public class PlayerScript : NetworkBehaviour
     {
     }
 
-    
+    public static PlayerScript GetLocalPlayer()
+    {
+        var players = GameObject.FindGameObjectsWithTag("Player");
+        for(int i = 0; i < players.Length; ++i)
+        {
+            PlayerScript script = players[i].GetComponent<PlayerScript>();
+            if(script.isLocalPlayer)
+            {
+                return script;
+            }
+        }
+        return null;
+    }
 
     [ClientRpc]
     public void RpcRecievePolicies(PolicyCard[] cards)
@@ -112,11 +98,37 @@ public class PlayerScript : NetworkBehaviour
         }
     }
 
+    public void SendChoices(int discardChoice)
+    {
+        if (isServer)
+        {
+            RpcSendChoicesToClient(discardChoice);
+        }
+        else
+        {
+            CmdSendChoices(discardChoice);
+        }
+    }
+
     [Command]
-    public void CmdSendChoices(int discardChoice)
+    void CmdSendChoices(int discardChoice)
     {
         RpcSendChoicesToClient(discardChoice);
     }
+
+    [ClientRpc]
+    void RpcSendChoicesToClient(int discardChoice)
+    {
+        GameObject.Find("InfoText").GetComponent<Text>().text = "Vote on a policy!";
+        GameObject.Find("PolicyChoices").GetComponent<PolicyCards>().OnVoting(discardChoice);
+    }
+
+    [ClientRpc]
+    public void RpcSendVotesToClient(int index, int count)
+    {
+        GameObject.Find("PolicyChoices").transform.GetChild(index).Find("VoteCount").GetComponent<Text>().text = count.ToString();
+    }
+
 
     [ClientRpc]
     public void RpcAddCharacters(CharacterSet characterSet)
@@ -211,27 +223,53 @@ public class PlayerScript : NetworkBehaviour
         {
             otherCharacters.GetChild(j).GetComponent<CharacterScript>().InitCharacter(character3[j]);
         }
+        SetRelationships();
     }
 
-    [ClientRpc]
-    void RpcSendChoicesToClient(int discardChoice)
+    void SetRelationships()
     {
-        GameObject.Find("InfoText").GetComponent<Text>().text = "Vote on a policy!";
-        GameObject.Find("PolicyChoices").GetComponent<PolicyCards>().OnVoting(discardChoice);
+        Transform characters = GameObject.Find("Characters").transform;
+        for (int j = 0; j < characters.childCount; ++j)
+        {
+            characters.GetChild(j).GetComponent<CharacterScript>().SetRelationship();
+        }
+        characters = GameObject.Find("OtherCharacters").transform;
+        for(int i = 0; i < characters.childCount; ++i)
+        {
+            for (int j = 0; j < characters.GetChild(i).childCount; ++j)
+            {
+                characters.GetChild(i).GetChild(j).GetComponent<CharacterScript>().SetRelationship();
+            }
+        }
+    }
+
+    public void SendVote(int index)
+    {
+        if (isServer)
+        {
+            GameObject server = GameObject.Find("ServerManager");
+            if (server)
+            {
+                server.GetComponent<ServerManager>().AddVote(index);
+            }
+        }
+        else
+        {
+            if(isLocalPlayer)
+            {
+                CmdSendVote(index);
+            }
+        }
     }
 
     [Command]
-    public void CmdSendVote(int index)
+    void CmdSendVote(int index)
     {
-        RpcVoteToClient(index);
-        //GameObject.Find("ServerManager").GetComponent<ServerManager>().AddVote(index);
-    }
-
-    [ClientRpc]
-    void RpcVoteToClient(int index)
-    {
-        GameObject.Find("PolicyChoices").transform.GetChild(index).Find("VoteCount").GetComponent<Text>().text = "Works";
-
+        GameObject server = GameObject.Find("ServerManager");
+        if (server)
+        {
+            server.GetComponent<ServerManager>().AddVote(index);
+        }
     }
 
     [ClientRpc]
@@ -245,7 +283,7 @@ public class PlayerScript : NetworkBehaviour
         Transform characters = GameObject.Find("Characters").transform;
         for (int j = 0; j < characters.childCount; ++j)
         {
-            characters.GetChild(j).GetComponent<CharacterScript>().OnPolicyCard(choices);
+            characters.GetChild(j).GetComponent<CharacterScript>().OnPolicyCard(choices, false);
         }
     }
 
