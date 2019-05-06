@@ -29,13 +29,13 @@ public struct PolicyCard
 public class Characters
 {
     public const int characterCount = 12;
-    public static string[] professions = new string[9] { "Civil", "Trade", "Business", "Healthcare", "Legal", "Shop", "Retired", "Unemployed", "Student" };
+    public static string[] professions = new string[9] { "Civil Service", "Trade", "Buisness", "Healthcare", "Legal", "Retail", "Retired", "Unemployed", "Student" };
     public static string[] names = new string[characterCount] { "Will",  "Jim", "John", "Steve", "Chris", "Ommar", "Annie", "Leanne", "Steph", "Karen", "Megan", "Alanah" };
-    public static string[] tierOneJobs = new string[4] {
-        "Buisness Manager", "Buisness Worker", "Retail Worker", "Plumber"
+    public static string[] tierOneJobs = new string[5] {
+        "Buisness Manager", "Buisness Worker", "Retail Worker", "Plumber", "Mechanic"
     };
     public static string[] tierTwoJobs = new string[4] {
-        "Buiness Owner", "Paralegal", "Shop Owner", "Police"
+        "Buisness Owner", "Paralegal", "Shop Owner", "Police"
     };
     public static string[] tierThreeJobs = new string[4] {
         "Doctor", "Nurse", "Lawyer", "Judge",
@@ -158,38 +158,11 @@ public class PlayerScript : NetworkBehaviour
             SetCharacters(characterSet.characters4, characterSet.characters, characterSet.characters2, characterSet.characters3);
             SetCharacterNames(1, 2, 3);
         }
-        //if(playerId == playerIndex)
-        //{
-        //    Transform characters = GameObject.Find("Characters").transform;
-        //    for (int j = 0; j < characters.childCount; ++j)
-        //    {
-        //        characters.GetChild(j).GetComponent<CharacterScript>().InitCharacter(characterSet.characters[j]);
-        //    }
-
-        //    //GameObject policyParent = GameObject.Find("PolicyChoices");
-        //    //for (int i = 0; i < policyParent.transform.childCount; ++i)
-        //    //{
-        //    //    Transform policyButton = policyParent.transform.GetChild(i);
-        //    //    bool positive = Random.Range(0, 2) == 0 ? true : false;
-        //    //    int ammount = Random.Range(1, 20);
-        //    //    string line = (positive ? "+ " : "- ") + ammount.ToString();
-
-        //    //    if (!positive)
-        //    //    {
-        //    //        ammount = -ammount;
-        //    //    }
-        //    //    policyButton.GetComponent<PolicyScript>().policyModifier = ammount;
-        //    //    policyButton.GetComponentInChildren<Text>().text = "Policy " + (i + 1).ToString() + "\n\n" + line;
-        //    //}
-        //}
-        //else
-        //{
-        //    Transform characters = GameObject.Find("OtherCharacters").transform.GetChild(otherPlayerIndex);
-        //    for (int j = 0; j < characters.childCount; ++j)
-        //    {
-        //        characters.GetChild(j).GetComponent<CharacterScript>().InitCharacter(characterSet.characters[j]);
-        //    }
-        //}
+        var cover = GameObject.Find("Cover");
+        if(cover)
+        {
+            Destroy(cover);
+        }
     }
 
     void SetCharacterNames(uint index2, uint index3, uint index4)
@@ -283,8 +256,18 @@ public class PlayerScript : NetworkBehaviour
         Transform characters = GameObject.Find("Characters").transform;
         for (int j = 0; j < characters.childCount; ++j)
         {
-            characters.GetChild(j).GetComponent<CharacterScript>().OnPolicyCard(choices, false);
+            characters.GetChild(j).GetComponent<CharacterScript>().OnPolicyCard(choices);
         }
+
+        characters = GameObject.Find("OtherCharacters").transform;
+        for (int i = 0; i < characters.childCount; ++i)
+        {
+            for (int j = 0; j < characters.GetChild(i).childCount; ++j)
+            {
+                characters.GetChild(i).GetChild(j).GetComponent<CharacterScript>().OnPolicyCard(choices);
+            }
+        }
+        GameObject.Find("PreviousPolicy").GetComponent<PolicyScript>().setPolicy(choices);
     }
 
     [ClientRpc]

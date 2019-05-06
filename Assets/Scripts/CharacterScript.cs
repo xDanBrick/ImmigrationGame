@@ -63,24 +63,18 @@ public class CharacterScript : MonoBehaviour, IPointerEnterHandler, IPointerExit
 		
 	}
 
-    
-    public void InitCharacter(Character character)
+    void setJob(string roleName)
     {
-        characterName = character.name;
-        relationshipName = character.relationshipName;
-        jobName = character.roleName;
-        migrationStatus = character.migrationStatus;
-        isMale = character.isMale;
-        transform.Find("NameText").GetComponent<Text>().text = characterName;
+        jobName = roleName;
         transform.Find("CharacterText").GetComponent<Text>().text = "Status: " + GetMirationStatusText() + "\n\nRole: " + jobName + "\n\nRelationship: " + relationshipName;
 
         string resourceName = "WRONG";
 
-        if(jobName == "Buisness Manager" || jobName == "Buisness Worker" || jobName == "Buisness Owner")
+        if (jobName == "Buisness Manager" || jobName == "Buisness Worker" || jobName == "Buisness Owner")
         {
             resourceName = "Manager";
         }
-        else if(jobName == "Paralegal" || jobName == "Lawyer" || jobName == "Judge")
+        else if (jobName == "Paralegal" || jobName == "Lawyer" || jobName == "Judge")
         {
             resourceName = "Lawyer";
         }
@@ -92,7 +86,7 @@ public class CharacterScript : MonoBehaviour, IPointerEnterHandler, IPointerExit
         {
             resourceName = "Student";
         }
-        else if(jobName == "Retired" || jobName == "Unemployed")
+        else if (jobName == "Retired" || jobName == "Unemployed")
         {
             resourceName = "None";
         }
@@ -100,7 +94,7 @@ public class CharacterScript : MonoBehaviour, IPointerEnterHandler, IPointerExit
         {
             resourceName = "Retail";
         }
-        else if (jobName == "Plumber")
+        else if (jobName == "Plumber" || jobName == "Mechanic")
         {
             resourceName = "Overall";
         }
@@ -108,17 +102,29 @@ public class CharacterScript : MonoBehaviour, IPointerEnterHandler, IPointerExit
         {
             resourceName = "Police";
         }
+        transform.Find("RolePart").Find("RoleFigure").GetComponent<Image>().sprite = Resources.Load<Sprite>(resourceName + (isMale ? "Male" : "Female"));
+    }
+
+    public void InitCharacter(Character character)
+    {
+        characterName = character.name;
+        relationshipName = character.relationshipName;
+
+        setJob(character.roleName);
+        migrationStatus = character.migrationStatus;
+        isMale = character.isMale;
+        transform.Find("NameText").GetComponent<Text>().text = characterName;
+       
 
         var sprite = Resources.Load<Sprite>(isMale ? "idmale" : "idfemale");
 
         transform.Find("PersonPart").Find("PersonFigure").GetComponent<Image>().sprite = sprite;
         transform.Find("RolePart").Find("RoleOutline").GetComponent<Image>().sprite = Resources.Load<Sprite>("Role" + (isMale ? "Male" : "Female"));
-        transform.Find("RolePart").Find("RoleFigure").GetComponent<Image>().sprite = Resources.Load<Sprite>(resourceName + (isMale ? "Male" : "Female"));
 
         //transform.Find("ProsperityBar").Find("Slider").GetComponent<RectTransform>().anchoredPosition = new Vector2(prosperityOffset, 0.0f);
     }
 
-    public void IncrementCounter(int ammount)
+    public void IncrementCounter(int ammount, bool isRelationship = false)
     {
         prosperityCounter += ammount;
         if (prosperityCounter > prosperityMax)
@@ -131,6 +137,19 @@ public class CharacterScript : MonoBehaviour, IPointerEnterHandler, IPointerExit
             prosperityCounter = -prosperityMax;
         }
         transform.Find("ProsperityBar").Find("Slider").GetComponent<RectTransform>().anchoredPosition = new Vector2((float)prosperityCounter, 0.0f);
+        if (isRelationship)
+        {
+            ammount /= 2;
+            if (ammount > 0)
+            {
+                --ammount;
+            }
+
+        }
+        else
+        {
+            relationshipScript.IncrementCounter(ammount, true);
+        }
     }
 
     public void SetRelationship()
@@ -158,23 +177,9 @@ public class CharacterScript : MonoBehaviour, IPointerEnterHandler, IPointerExit
         }
     }
 
-    public void OnPolicyCard(PolicyCard card, bool isRelationship)
+    public void OnPolicyCard(PolicyCard card)
     {
-        int ammount = card.ammount;
-        if(isRelationship)
-        {
-            ammount /= 2;
-            if(ammount > 0)
-            {
-                --ammount;
-            }
-            
-        }
-        else
-        {
-            relationshipScript.OnPolicyCard(card, true);
-        }
-        
+       
         switch (card.policyType)
         {
             case PolicyType.MigrationStatus:
@@ -182,14 +187,14 @@ public class CharacterScript : MonoBehaviour, IPointerEnterHandler, IPointerExit
                     //If you have illegal migration status with N prosperity, gain Documented status - 2 Cards.
                     if (card.policyIndex == 0)
                     {
-                        if(migrationStatus == MigrationStatus.undocumented)
+                        if (migrationStatus == MigrationStatus.undocumented)
                         {
-                            if (prosperityCounter > (prosperityMax / 2))
+                            if (prosperityCounter > 0)
                             {
                                 migrationStatus = MigrationStatus.working;
                             }
                         }
-                        
+
                     }
                     //+n Prosperity if you are illegal, -N prosperity for legal. (vice versa) - 2 Cards.
                     else if (card.policyIndex == 1)
@@ -203,17 +208,21 @@ public class CharacterScript : MonoBehaviour, IPointerEnterHandler, IPointerExit
                             IncrementCounter(-card.ammount);
                         }
                     }
-                    //Become a citizen if working for 4 years and prosperity is +n in any of the next 3 turns. - 1 cards (2 duplicates)
+                    //Lose job if illegal with -n prosperity, legals get +N prosperity. (after 3 turns) - 2 Cards
                     else if (card.policyIndex == 2)
                     {
-
+                        if (migrationStatus == MigrationStatus.undocumented)
+                        {
+                            if (prosperityCounter < 0)
+                            {
+                                setJob("Unemployed");
+                            }
+                        }
+                        else
+                        {
+                            IncrementCounter(card.ammount);
+                        }
                     }
-                    //Lose job if illegal with -n prosperity, legals get +N prosperity. (after 3 turns) - 2 Cards
-                    else if (card.policyIndex == 3)
-                    {
-
-                    }
-                    
                 break;
             }
             case PolicyType.Occupation:
@@ -247,7 +256,14 @@ public class CharacterScript : MonoBehaviour, IPointerEnterHandler, IPointerExit
                         {
                             if (jobTier != JobTier.tierThree)
                             {
-                                //Do promotion
+                                if(prosperityCounter > 0)
+                                {
+                                    if(jobTier == JobTier.tierOne)
+                                    {
+                                        setJob(Characters.tierTwoJobs[Random.Range(0, Characters.tierTwoJobs.Length)]);
+                                    }
+                                    
+                                }
                             }
                         }
                     }
@@ -256,7 +272,11 @@ public class CharacterScript : MonoBehaviour, IPointerEnterHandler, IPointerExit
                     {
                         if (card.professionName == proffession)
                         {
-
+                            IncrementCounter(card.ammount);
+                        }
+                        else if(card.professionName2 == proffession)
+                        {
+                            IncrementCounter(-card.ammount);
                         }
                     }
                     break;
@@ -278,26 +298,10 @@ public class CharacterScript : MonoBehaviour, IPointerEnterHandler, IPointerExit
                     //Tier X workers can change jobs or promote, if positive prosperity. - 3 Cards.
                     else if (card.policyIndex == 1)
                     {
-                        if(jobTier == JobTier.tierOne)
+                        if(prosperityCounter > 0)
                         {
-                            if(prosperityCounter > 0)
-                            {
-
-                            }
+                            setJob(Characters.tierTwoJobs[Random.Range(0, Characters.tierTwoJobs.Length)]);
                         }
-                    }
-                    //Tier X workers have a chance to lose their jobs, -n prosperity. - 3 Cards.
-                    else if (card.policyIndex == 2)
-                    {
-                        if (jobTier == JobTier.tierOne)
-                        {
-
-                        }
-                    }
-                    //Tier X workers gain +1 prosperity for the next 2 rounds. - 3 Cards.
-                    else if (card.policyIndex == 3)
-                    {
-
                     }
                     break;
             }
